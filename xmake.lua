@@ -2,6 +2,11 @@ add_rules("mode.debug", "mode.release")
 
 add_repositories("levimc-repo https://github.com/LiteLDev/xmake-repo.git")
 
+-- 锁定 zlib 到 1.3.1：levilamina 内部的 libcurl 依赖 zlib 1.3.1，但官方 xmake-repo
+-- 当前默认解析到 zlib 1.3.2，导致 libcurl 的构建引用了不存在的 1.3.1 路径而失败。
+-- 显式钉死全局 zlib 版本，让整张依赖图（含 libcurl）统一使用 1.3.1。
+add_requires("zlib 1.3.1")
+
 option("target_type")
     set_default("server")
     set_showmenu(true)
