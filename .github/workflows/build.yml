@@ -16,12 +16,15 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: ~/AppData/Local/.xmake
-          key: xmake-${{ hashFiles('xmake.lua') }}
-          restore-keys: xmake-
+          key: xmake-1.9.9-vs2022-${{ hashFiles('xmake.lua') }}
+          restore-keys: |
+            xmake-1.9.9-vs2022-
 
       - run: xmake repo -u
 
-      - run: xmake f -a x64 -m release -p windows -v --target_type=server -y
+      # 强制 VS2022：levilamina 1.9.9 的传递依赖(zlib/libcurl)在 VS2026 下会源码编译且
+      # 产出 zlib.lib 失败，导致 libcurl 链接报错。VS2022 能命中这些依赖的预编译包，避坑。
+      - run: xmake f -a x64 -m release -p windows -v --vs=2022 --target_type=server -y
 
       - run: xmake -v -y
 
