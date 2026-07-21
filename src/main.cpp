@@ -1,39 +1,44 @@
-// EndMushroomGuard —— LeviLamina C++ 原生插件
+// EndMushroomGuard —— LeviLamina C++ 原生插件（兼容 LeviLamina 1.9.9）
 // 功能：拦截玩家在末地放置蘑菇（方块压根不出现，物品栏保留），并发送文字提醒。
-// 兼容 LeviLamina 最新版（CI 已验证 26.20.4 ↔ MC 26.20.x）。
 //
-// 与 JS/LLSE 版的区别：
+// 与 LLSE 脚本版的区别：
 //   LLSE 的 afterPlaceBlock 事件【无法拦截】（return false 无效），只能事后清除方块。
 //   本插件使用【可取消】的 PlayerPlacingBlockEvent，在放置“之前”调用 event.cancel()，
-//   蘑菇根本不会生成、玩家手里还留着那个蘑菇——这是 JS 做不到的硬拦截。
+//   蘑菇根本不会生成、玩家手里还留着那个蘑菇——这是脚本做不到的硬拦截。
+//   且 C++ 原生 mod 不依赖 LSE 引擎，零额外依赖，不与 CoralFans 等抢版本。
 
 #include <cctype>
-#include <memory>
 #include <string>
 
 #include "ll/api/mod/NativeMod.h"
+#include "ll/api/mod/RegisterHelper.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/player/PlayerPlaceBlockEvent.h"
 
 #include "mc/world/actor/player/Player.h"
 
-class EndMushroomGuard : public ll::mod::NativeMod {
+// 注意：LeviLamina 1.9.9 的 NativeMod 采用【组合】写法（不继承 NativeMod），
+//       而是持有 NativeMod& 引用，通过 LL_REGISTER_MOD 宏把实例绑定到引擎。
+class EndMushroomGuard {
 public:
-    EndMushroomGuard() : NativeMod() {}
-    ~EndMushroomGuard() override = default;
+    // 构造时从当前正在加载的 mod 拿到 NativeMod 引用
+    EndMushroomGuard() : mSelf(*ll::mod::NativeMod::current()) {}
 
-    bool enable() override;
-    bool disable() override;
+    [[nodiscard]] ll::mod::NativeMod& getSelf() const { return mSelf; }
+
+    static EndMushroomGuard& getInstance();
+
+    // load/enable/disable 是普通成员方法（非虚），由 LL_REGISTER_MOD 通过 concept 自动绑定
+    bool load();
+    bool enable();
+    bool disable();
 
 private:
-    // 返回当前 mod 实例（用于拿 logger / 配置目录）
-    static EndMushroomGuard& getSelf();
-
+    ll::mod::NativeMod&    mSelf;
     ll::event::ListenerPtr mPlacingListener;
 };
 
-// 判断物品 ID 是否属于蘑菇 / 菌类。
-// 覆盖：红菇、棕菇、蘑菇柄、绯红菌、诡异菌、绯红菌根、诡异菌根等。
+// 判断物品 ID 是否属于蘑菇 / 菌类（覆盖红菇、棕菇、蘑菇柄、绯红菌、诡异菌等）。
 // item.getTypeName() 返回形如 "minecraft:red_mushroom" 的完整 ID。
 static bool isMushroom(std::string const& rawId) {
     std::string id = rawId;
@@ -42,10 +47,9 @@ static bool isMushroom(std::string const& rawId) {
         || id.find("fungus") != std::string::npos;
 }
 
-EndMushroomGuard& EndMushroomGuard::getSelf() {
-    // NativeMod::current() 返回当前正在启用 / 加载的 mod 实例。
-    // EndMushroomGuard 是 NativeMod 的唯一子类实例，static_cast 安全（BDS 缺 RTTI，禁用 dynamic_cast）。
-    return static_cast<EndMushroomGuard&>(ll::mod::NativeMod::current());
+bool EndMushroomGuard::load() {
+    getSelf().getLogger().info("EndMushroomGuard 加载中……");
+    return true;
 }
 
 bool EndMushroomGuard::enable() {
@@ -56,9 +60,8 @@ bool EndMushroomGuard::enable() {
         [&logger](ll::event::player::PlayerPlacingBlockEvent& event) {
             auto& player = event.self();   // Player&
 
-            // 1) 仅拦截末地（基岩版 DimensionId：0=主世界，1=下界，2=末地）
-            //    事件自带 pos()，BlockPos::getDimension() 返回 DimensionId 枚举，比从 Player 取维度更稳。
-            if ((int)event.pos().getDimension() != 2) {
+            // 1) 仅拦截末地（DimensionId：0=主世界，1=下界，2=末地）
+            if ((int)player.getDimensionId() != 2) {
                 return;
             }
 
@@ -92,6 +95,10 @@ bool EndMushroomGuard::disable() {
     return true;
 }
 
-// 入口：LeviLamina 加载 DLL 时会构造此全局实例并自动注册为 NativeMod。
-// 请确保 manifest.json 的 entry / name 与此类名一致，且 DLL 文件名相同。
-std::shared_ptr<EndMushroomGuard> mod = std::make_shared<EndMushroomGuard>();
+// 全局单例 + 注册到 LeviLamina
+EndMushroomGuard& EndMushroomGuard::getInstance() {
+    static EndMushroomGuard instance;
+    return instance;
+}
+
+LL_REGISTER_MOD(EndMushroomGuard, EndMushroomGuard::getInstance());
