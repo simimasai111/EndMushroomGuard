@@ -13,20 +13,20 @@ jobs:
 
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
-          xmake-version: v2.9.9
+          xmake-version: branch@master
 
       - uses: actions/cache@v6
         with:
           path: ~/AppData/Local/.xmake
-          key: xmake-1.9.9-win2022-${{ hashFiles('xmake.lua') }}
+          key: xmake-1.9.9-win2022-master-${{ hashFiles('xmake.lua') }}
           restore-keys: |
-            xmake-1.9.9-win2022-
+            xmake-1.9.9-win2022-master-
 
       - run: xmake repo -u
 
-      # windows-2022 自带干净的 VS2022（无 VS2026），让 xmake 自动探测即可。
-      # 切勿在 windows-latest(Server 2025) 上构建——那里默认 VS2026 会让 xmake v2.9.9
-      # 探测失败报 “vs not found!”，且 zlib/libcurl 在 VS2026 下会源码编译缺 .lib。
+      # levilamina 1.9.9 的包构建要求 xmake >= 3.0.0，故必须用 branch@master（3.x）。
+      # 且必须在 windows-2022 上构建：该镜像只含干净的 VS2022（无 VS2026）。
+      # 在 windows-latest(Server 2025) 上 xmake 会探测到 VS2026，导致 zlib/libcurl 源码编译缺 .lib。
       - run: xmake f -a x64 -m release -p windows -v --target_type=server -y
 
       - run: xmake -v -y
