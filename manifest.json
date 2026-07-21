@@ -1,0 +1,15 @@
+{
+  "entry": "EndMushroomGuard",
+  "name": "EndMushroomGuard",
+  "type": "dll",
+  "platform": "windows",
+  "passive": false,
+  "version": "1.0.0",
+  "author": "alone8198",
+  "description": "拦截玩家在末地放置蘑菇（C++ 原生，可取消事件 PlayerPlacingBlockEvent）",
+  "dependencies": [
+    { "name": "LeviLamina", "version": "26.10.10" }
+  ],
+  "loadBefore": [],
+  "conflicts": []
+}

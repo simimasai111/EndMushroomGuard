@@ -1,0 +1,50 @@
+{
+  "format_version": 3,
+  "format_uuid": "7d3b9c2e-1a4f-4c8b-9d6e-2f5a8b1c3d4e",
+  "tooth": "github.com/alone8198/EndMushroomGuard",
+  "version": "1.0.0",
+  "info": {
+    "name": "EndMushroomGuard",
+    "description": "拦截玩家在末地放置蘑菇（C++ 原生，可取消事件 PlayerPlacingBlockEvent）",
+    "tags": [
+      "platform:levilamina",
+      "type:mod"
+    ]
+  },
+  "variants": [
+    {
+      "label": "",
+      "platform": "win-x64",
+      "dependencies": {
+        "github.com/LiteLDev/LeviLamina": "26.10.10"
+      },
+      "assets": [
+        {
+          "type": "zip",
+          "urls": [
+            "https://{{tooth}}/releases/download/v{{version}}/EndMushroomGuard-server-windows-x64.zip"
+          ],
+          "placements": [
+            {
+              "type": "dir",
+              "src": "EndMushroomGuard/",
+              "dest": "mods/EndMushroomGuard/"
+            }
+          ]
+        }
+      ],
+      "preserve_files": [],
+      "remove_files": [],
+      "scripts": {
+        "pre_install": [],
+        "install": [],
+        "post_install": [],
+        "pre_pack": [],
+        "post_pack": [],
+        "pre_uninstall": [],
+        "uninstall": [],
+        "post_uninstall": []
+      }
+    }
+  ]
+}
