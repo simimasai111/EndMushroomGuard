@@ -8,8 +8,8 @@ option("target_type")
     set_values("server", "client")
 option_end()
 
--- 拉取 LeviLamina SDK（官方 xmake-repo）。不锁版本即拉当前最新稳定版；
--- 如需与 manifest.json 精确对齐，可改为 add_requires("levilamina 26.10.10", {...})
+-- 拉取 LeviLamina SDK（官方 xmake-repo），当前不锁版本即拉最新稳定版（CI 已验证 26.20.4 ↔ MC 26.20.x）。
+-- 若要精确锁定某个 LL 版本，可改为 add_requires("levilamina 26.20.4", {configs = {target_type = get_config("target_type")}})
 add_requires("levilamina", {configs = {target_type = get_config("target_type")}})
 add_requires("levibuildscript")
 
