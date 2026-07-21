@@ -41,7 +41,17 @@ target("EndMushroomGuard")
             "-Wno-pragma-system-header-outside-header",
             {tools = {"clang_cl"}}
         )
-        set_toolchains("clang-cl")
+        -- 关键修复：使用 MSVC(cl.exe) 而非 clang-cl。
+        -- 原因：LeviLamina 依赖的 rapidjson v1.1.0 在 document.h:319 有一个
+        -- 非标准的 GenericStringRef::operator=，它向 const 成员 length 赋值，
+        -- 这在标准 C++ 中是非法代码。MSVC/GCC 会容忍它，但现代 Clang（含 runner
+        -- 自带的、llvm-prebuilt 提供的 clang 16/18）会直接报 hard error：
+        --   "cannot assign to non-static data member 'length' with const-qualified type"
+        -- LeviLamina 自身的 Windows target 不设置 toolchain，xmake 默认回退到 MSVC，
+        -- 因此它的源码能编译过 rapidjson。本插件此前强制 clang-cl，被 runner 上过新的
+        -- 系统 LLVM 命中而失败。改为 MSVC 后即与 LeviLamina 自身构建使用同一工具链。
+        -- （注意：插件产物 DLL 的 ABI 与 clang-cl 完全一致，均可被 LeviLamina 加载。）
+        set_toolchains("msvc")
     end
     add_packages("levilamina")
     set_kind("shared")
