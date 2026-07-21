@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v7
 
@@ -18,15 +18,16 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: ~/AppData/Local/.xmake
-          key: xmake-1.9.9-vs2022-x29-${{ hashFiles('xmake.lua') }}
+          key: xmake-1.9.9-win2022-${{ hashFiles('xmake.lua') }}
           restore-keys: |
-            xmake-1.9.9-vs2022-x29-
+            xmake-1.9.9-win2022-
 
       - run: xmake repo -u
 
-      # 强制 VS2022：levilamina 1.9.9 的传递依赖(zlib/libcurl)在 VS2026 下会源码编译且
-      # 产出 zlib.lib 失败。锁 xmake v2.9.9（不认识 VS2026）使其只能选 VS2022，命中预编译包。
-      - run: xmake f -a x64 -m release -p windows -v --vs=2022 --target_type=server -y
+      # windows-2022 自带干净的 VS2022（无 VS2026），让 xmake 自动探测即可。
+      # 切勿在 windows-latest(Server 2025) 上构建——那里默认 VS2026 会让 xmake v2.9.9
+      # 探测失败报 “vs not found!”，且 zlib/libcurl 在 VS2026 下会源码编译缺 .lib。
+      - run: xmake f -a x64 -m release -p windows -v --target_type=server -y
 
       - run: xmake -v -y
 
