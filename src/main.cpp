@@ -1,6 +1,6 @@
 // EndMushroomGuard —— LeviLamina C++ 原生插件
 // 功能：拦截玩家在末地放置蘑菇（方块压根不出现，物品栏保留），并发送文字提醒。
-// 兼容 LeviLamina 最新版（LL 26.10.x ↔ MC 26.10.x）。
+// 兼容 LeviLamina 最新版（CI 已验证 26.20.4 ↔ MC 26.20.x）。
 //
 // 与 JS/LLSE 版的区别：
 //   LLSE 的 afterPlaceBlock 事件【无法拦截】（return false 无效），只能事后清除方块。
@@ -13,7 +13,7 @@
 
 #include "ll/api/mod/NativeMod.h"
 #include "ll/api/event/EventBus.h"
-#include "ll/api/event/player/PlayerPlacingBlockEvent.h"
+#include "ll/api/event/player/PlayerPlaceBlockEvent.h"
 
 #include "mc/world/actor/player/Player.h"
 
@@ -52,13 +52,13 @@ bool EndMushroomGuard::enable() {
     auto& logger = getSelf().getLogger();
     auto& bus    = ll::event::EventBus::getInstance();
 
-    mPlacingListener = bus.emplaceListener<ll::event::PlayerPlacingBlockEvent>(
-        [&logger](ll::event::PlayerPlacingBlockEvent& event) {
+    mPlacingListener = bus.emplaceListener<ll::event::player::PlayerPlacingBlockEvent>(
+        [&logger](ll::event::player::PlayerPlacingBlockEvent& event) {
             auto& player = event.self();   // Player&
 
             // 1) 仅拦截末地（基岩版 DimensionId：0=主世界，1=下界，2=末地）
-            auto& dimension = player.getDimension();
-            if ((int)dimension.getDimensionId() != 2) {
+            //    事件自带 pos()，BlockPos::getDimension() 返回 DimensionId 枚举，比从 Player 取维度更稳。
+            if ((int)event.pos().getDimension() != 2) {
                 return;
             }
 
@@ -74,7 +74,7 @@ bool EndMushroomGuard::enable() {
 
             // 4) 文字提醒（§c = 红色）
             player.sendMessage(std::string("\u00a7c[系统] 末地不允许放置蘑菇！该操作已被拦截。"));
-            logger.info("已拦截玩家 {} 在末地放置蘑菇({})", player.getRealName(), itemId);
+            logger.info("已拦截末地放置蘑菇({})", itemId);
         }
     );
 
